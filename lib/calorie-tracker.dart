@@ -25,7 +25,8 @@ class _CalorieTrackerState extends State<CalorieTracker> {
   @override
   void initState() {
     super.initState();
-    _pickImageFromCamera();
+    // Initial setup
+    print('CalorieTracker initialized');
   }
 
   Future<void> _pickImageFromCamera() async {
@@ -36,46 +37,68 @@ class _CalorieTrackerState extends State<CalorieTracker> {
         _imageFile = File(pickedFile.path);
         _isProcessing = true;
       });
-      _performTextRecognition(File(pickedFile.path));
+      print('Image picked from camera: ${pickedFile.path}');
+      await _performTextRecognition(File(pickedFile.path));
+    } else {
+      print('No image picked.');
     }
   }
 
   Future<void> _performTextRecognition(File imageFile) async {
-    final inputImage = InputImage.fromFile(imageFile);
-    final textRecognizer = TextRecognizer();
-    final RecognizedText recognizedText =
-        await textRecognizer.processImage(inputImage);
+    try {
+      print('Performing text recognition...');
+      final inputImage = InputImage.fromFile(imageFile);
+      final textRecognizer = TextRecognizer();
+      final RecognizedText recognizedText =
+          await textRecognizer.processImage(inputImage);
 
-    setState(() {
-      _extractedText = recognizedText.text;
-      _isProcessing = false;
-    });
+      setState(() {
+        _extractedText = recognizedText.text;
+        _isProcessing = false;
+      });
 
-    _extractNutrients();
-    textRecognizer.close();
+      print('Recognized text: $_extractedText');
+      _extractNutrients(_extractedText);
+      textRecognizer.close();
+    } catch (e) {
+      print('Error during text recognition: $e');
+    }
   }
 
-  void _extractNutrients() {
+  void _extractNutrients(String text) {
+    // Clean the text for better extraction
+    text = text.replaceAll('\n', ' ').replaceAll(RegExp(r'\s+'), ' ');
+    print('Cleaned text: $text');
+
     setState(() {
-      protein = _extractValue(_extractedText, 'Protein');
-      carbs = _extractValue(_extractedText, 'Carbohydrates');
-      fat = _extractValue(_extractedText, 'Fat');
+      // Extract only the relevant nutrients
+      protein = _extractValue(text, 'Protein');
+      carbs = _extractValue(
+          text, 'Total Carbohydrate'); // Change to match the format
+      fat = _extractValue(text, 'Total Fat');
     });
+
+    print('Extracted values - Protein: $protein, Carbs: $carbs, Fat: $fat');
   }
 
   double _extractValue(String text, String nutrient) {
-    RegExp regex = RegExp(r'' + nutrient + r'\s*:\s*(\d+\.?\d*)\s*g',
-        caseSensitive: false);
+    // Adjusted regex to capture nutrients with or without the colon
+    RegExp regex =
+        RegExp(r'' + nutrient + r'\s*(\d+\.?\d*)\s*g', caseSensitive: false);
     Match? match = regex.firstMatch(text);
 
     if (match != null) {
+      print('Extracted $nutrient value: ${match.group(1)}g');
       return double.tryParse(match.group(1) ?? '0') ?? 0.0;
     }
+
+    print('No match found for $nutrient');
     return 0.0;
   }
 
   @override
   Widget build(BuildContext context) {
+    print("CalorieTracker build method called");
     return Scaffold(
       appBar: AppBar(
         title: const Text('Track Calories'),

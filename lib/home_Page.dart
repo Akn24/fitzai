@@ -15,11 +15,10 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   SpeechRecognitionService _speechRecognitionService =
       SpeechRecognitionService();
-
   Box<UserData>? userBox;
   UserData? userData;
-
-  bool isNavigating = false;
+  bool isNavigating = false; // Flag to prevent multiple triggers
+  bool isCalorieTrackerOpen = false; // Track if Calorie Tracker is open
 
   // Sample Data
   int workoutsCompleted = 3;
@@ -58,32 +57,48 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _onVoiceCommandDetected(String command) {
-    print('hehe,${command}');
-    if (command.contains("workout") ||
-        command.contains("Work-out") ||
-        command.contains("work-out") ||
-        command.contains("work") ||
-        command.contains("work out")) {
-      isNavigating = true;
+    if (!isNavigating) {
+      if (command.contains("workout") ||
+          command.contains("work-out") ||
+          command.contains("work out")) {
+        _navigateToPoseDetector();
+      } else if (command.contains("track")) {
+        _navigateToCalorieTracker();
+      }
+    }
+  }
 
-      Navigator.pushNamed(context, '/poseDetector').then((_) {
+  void _navigateToPoseDetector() {
+    setState(() {
+      isNavigating = true;
+    });
+    Navigator.pushNamed(context, '/poseDetector').then((_) {
+      setState(() {
         isNavigating = false;
       });
-    } else if (command.contains("track")) {
-      print('hehe123,${command}');
-      isNavigating = true;
+    });
+  }
 
+  void _navigateToCalorieTracker() {
+    if (!isCalorieTrackerOpen) {
+      setState(() {
+        isCalorieTrackerOpen = true;
+        isNavigating = true;
+      });
       Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => CalorieTracker(
-                  onNutrientsExtracted:
-                      (double protein, double carbs, double fat) {
-                    updateNutrientIntake(protein, carbs, fat);
-                  },
-                )),
+          builder: (context) => CalorieTracker(
+            onNutrientsExtracted: (double protein, double carbs, double fat) {
+              updateNutrientIntake(protein, carbs, fat);
+            },
+          ),
+        ),
       ).then((_) {
-        isNavigating = false;
+        setState(() {
+          isCalorieTrackerOpen = false;
+          isNavigating = false;
+        });
       });
     }
   }
@@ -115,9 +130,7 @@ class _HomePageState extends State<HomePage> {
               _buildHorizontalCalendar(),
               const SizedBox(height: 20),
               _buildTodaysWorkout(),
-              const SizedBox(
-                height: 20,
-              ),
+              const SizedBox(height: 20),
               _buildNutrientTrackingCard(),
             ],
           ),
@@ -163,39 +176,34 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildWorkoutsCompleted() {
-    return ElevatedButton(
-      onPressed: () {
-        Navigator.pushNamed(context, '/workout');
-      },
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Color.fromARGB(255, 165, 148, 210),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        width: double.infinity,
-        height: 130,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              '💪 Workouts Done',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-              ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Color.fromARGB(255, 165, 148, 210),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      width: double.infinity,
+      height: 130,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            '💪 Workouts Done',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
             ),
-            const SizedBox(height: 8),
-            Text(
-              '$workoutsCompleted/$totalWorkouts',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$workoutsCompleted/$totalWorkouts',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

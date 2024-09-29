@@ -19,17 +19,18 @@ double calculateAngle(PoseLandmark firstLandmark, PoseLandmark midLandmark,
   return degrees;
 }
 
-PushUpState? isPushUp(double angleElbow, PushUpState current) {
-  final downThreshold = 60.0;
-  final upThreshold = 80.0;
-  final margin = 10.0;
+PushUpState? isPushUp(double angleKnee, PushUpState current) {
+  final standingThreshold = 170.0;
+  final squattingThreshold = 130.0;
+  final margin = 5.0;
 
-  if (current == PushUpState.complete && angleElbow > (upThreshold - margin)) {
-    print('Detected Push-Up Init');
+  if (current == PushUpState.complete &&
+      angleKnee > (standingThreshold - margin)) {
+    print('Detected Squat Init');
     return PushUpState.init;
   } else if (current == PushUpState.init &&
-      angleElbow < (downThreshold + margin)) {
-    print('Detected Push-Up Complete');
+      angleKnee < (squattingThreshold + margin)) {
+    print('Detected Squat Complete');
     return PushUpState.complete;
   }
 
