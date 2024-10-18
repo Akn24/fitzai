@@ -13,7 +13,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  SpeechRecognitionService _speechRecognitionService =
+  final SpeechRecognitionService _speechRecognitionService =
       SpeechRecognitionService();
   Box<UserData>? userBox;
   UserData? userData;
@@ -29,6 +29,22 @@ class _HomePageState extends State<HomePage> {
   double totalProtein = 20.0;
   double totalCarbs = 150.0;
   double totalFat = 80.0;
+
+  Map<String, bool> workoutCompletion = {
+    'Shoulder Press': true,
+    'Bicep Curls': true,
+    'Push Ups': true,
+    'Leg Squats': false,
+    'Tricep Dips': false,
+  };
+
+  Map<String, int> caloriesPerWorkout = {
+    'Shoulder Press': 50,
+    'Bicep Curls': 40,
+    'Push Ups': 30,
+    'Leg Squats': 60,
+    'Tricep Dips': 35,
+  };
 
   @override
   void initState() {
@@ -54,6 +70,25 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     _speechRecognitionService.stopListening();
     super.dispose();
+  }
+
+  int _calculateTotalCaloriesBurnt() {
+    int totalCalories = 0;
+    workoutCompletion.forEach((workout, completed) {
+      if (completed) {
+        totalCalories += caloriesPerWorkout[workout] ?? 0;
+      }
+    });
+    return totalCalories;
+  }
+
+  void _onWorkoutCompletionChanged(String workout, bool? isCompleted) {
+    setState(() {
+      workoutCompletion[workout] = isCompleted ?? false;
+      workoutsCompleted = workoutCompletion.values.where((done) => done).length;
+      caloriesBurnt =
+          _calculateTotalCaloriesBurnt(); // Recalculate calories burnt
+    });
   }
 
   void _onVoiceCommandDetected(String command) {
@@ -165,7 +200,8 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: _buildCaloriesCard('Calories Out', caloriesBurnt),
+              child: _buildCaloriesCard('Calories Out',
+                  caloriesBurnt), // Updated to show dynamic calories burnt
             ),
           ],
         ),
@@ -319,19 +355,43 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildWorkoutCard(String workoutName, bool isCompleted) {
-    return Card(
-      color:
-          isCompleted ? const Color.fromARGB(255, 165, 148, 210) : Colors.white,
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: isCompleted
+            ? const Color.fromARGB(
+                255, 165, 148, 210) // Background color for completed workouts
+            : const Color.fromARGB(
+                255, 240, 240, 240), // Background color for incomplete workouts
+        borderRadius:
+            BorderRadius.circular(12), // Rounded corners for a smooth look
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.5),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: const Offset(0, 3), // Shadow effect
+          ),
+        ],
+      ),
       child: ListTile(
         leading: Checkbox(
-          value: isCompleted,
+          value: workoutCompletion[workoutName],
           onChanged: (bool? newValue) {
-            setState(() {
-              isCompleted = newValue ?? false;
-            });
+            _onWorkoutCompletionChanged(
+                workoutName, newValue); // Update completion state
           },
         ),
-        title: Text(workoutName),
+        title: Text(
+          workoutName,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: isCompleted
+                ? Colors.white
+                : Colors.black, // Change text color based on state
+          ),
+        ),
       ),
     );
   }

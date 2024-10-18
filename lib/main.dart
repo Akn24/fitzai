@@ -2,7 +2,6 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:umbc_hack/calorie-tracker.dart';
 import 'package:umbc_hack/user_data.dart';
 import 'package:umbc_hack/home_Page.dart';
 import 'package:umbc_hack/models/push_up_model.dart';
