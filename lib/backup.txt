@@ -24,7 +24,7 @@ PushUpState? isPushUp(double angleElbow, PushUpState current) {
   final downThreshold = 90.0; // Push-up "down" position (elbow bent)
   final upThreshold = 140.0; // Push-up "up" position (elbow extended)
 
-  print('Angle: $angleElbow, Current State: $current');
+  print('Angle of the Elbow: $angleElbow, Current State: $current');
 
   // Transition from down (complete) to up (init)
   if (current == PushUpState.complete && angleElbow > upThreshold) {
